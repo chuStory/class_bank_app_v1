@@ -12,11 +12,10 @@ import com.tencoding.bank.handler.exception.CustomPageException;
 public class AccountController {
 
 	// 계좌 목록 페이지
-	// http/localhost:80/account/list
+	// http://localhost:80/account/list
 	@GetMapping("/list")
 	public String list() {
-//		return "account/list";
-		throw new CustomPageException("페이지가 없어요", HttpStatus.NOT_FOUND);
+		return "account/list";
 	}
 	
 	// 계좌 생성 페이지
