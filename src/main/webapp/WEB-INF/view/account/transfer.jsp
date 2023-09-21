@@ -10,7 +10,7 @@
 	<div class="bg-light p-md-5 h-75">
 
 		<div class="form-group">
-			<form action="" method="post">
+			<form action="/account/transfer" method="post">
 				<div class="form-group">
 					<label for="amount">이체 금액:</label>
 					<input type="text" id="amount"

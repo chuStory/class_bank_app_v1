@@ -10,7 +10,7 @@
 	<div class="bg-light p-md-5 h-75">
 
 		<div class="form-group">
-			<form action="">
+			<form action="/account/withdraw" method="post">
 				<div class="form-group">
 					<label for="amount">출금 금액:</label>
 					<input type="text" id="amount"

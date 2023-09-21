@@ -8,7 +8,7 @@
 	<h2>계좌 생성 페이지(인증)</h2>
 	<h5>어서오세요 환영합니다</h5>
 	<div class="bg-light p-md-5 h-75">
-		<form action="" method="post">
+		<form action="/account/save" method="post">
 			<div class="form-grup">
 				<lavel for="number">계좌 번호:</lavel>
 				<input type="text" id="number" class="form-control"

@@ -27,6 +27,7 @@ public class UserService {
 	// 정상 처리가 안되면 Rollback 처리 됨
 	@Transactional
 	public void signUp(SignUpFormDto signUpFormDto) {
+		
 		int result = userRepository.insert(signUpFormDto);
 		
 		System.out.println("result : " + result);
@@ -37,6 +38,7 @@ public class UserService {
 
 	// 로그인 서비스 처리
 	public User signIn(SignInFormDto signInFormDto) {
+		
 		
 		User userEntity = userRepository.findByUsernameAndPassword(signInFormDto);
 		if (userEntity == null) {

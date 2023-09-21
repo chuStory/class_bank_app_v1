@@ -4,12 +4,12 @@
 <mapper namespace="com.tencoding.bank.repository.interfaces.UserRepository"> 
 	
 	<select id="findByUsernameAndPassword" resultType="com.tencoding.bank.repository.model.User">
-		select * from user_tb where username = #{username} and password = #{password};
+		select * from user_tb where username = #{username} and password = #{password}
 	</select>
 	
 	<insert id="insert">
 		insert into user_tb(username, password, fullname, created_at)
-		values(#{username}, #{password}, #{fullname}, now());
+		values(#{username}, #{password}, #{fullname}, now())
 	</insert>
 	
 	<update id="updateById">
@@ -19,16 +19,16 @@
 	</update>
 	
 	<delete id="deleteById">
-		delete from user_tb where id = #{id};
+		delete from user_tb where id = #{id}
 	</delete>
 	
 	<select id="findById" resultType="com.tencoding.bank.repository.model.User">
-		select * from user_tb where id = #{id};
+		select * from user_tb where id = #{id}
 	</select>
 	
 	<!-- findAll -->
 	<select id="findAll" resultType="com.tencoding.bank.repository.model.User">
-		select * from user_tb;
+		select * from user_tb
 	</select>
 	
 </mapper>
