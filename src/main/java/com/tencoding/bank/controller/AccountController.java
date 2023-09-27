@@ -62,7 +62,6 @@ public class AccountController {
 
 	/**
 	 * 계좌 생성 로직 구현
-	 * 
 	 * @return account/save.jsp 페이지 이동
 	 */
 	@PostMapping("/save")
@@ -95,10 +94,8 @@ public class AccountController {
 		return "account/withdraw";
 	}
 
-	// body -> String -> amount=1000&wAccountId=10&/...
 	/**
 	 * 출금 기능 처리
-	 * 
 	 * @param withdrawFormDto
 	 * @return account/list 리다이렉트 처리
 	 */

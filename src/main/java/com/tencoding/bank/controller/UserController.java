@@ -3,12 +3,23 @@ package com.tencoding.bank.controller;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.RestTemplate;
 
+import com.tencoding.bank.dto.KakaoProfile;
+import com.tencoding.bank.dto.OAuthToken;
 import com.tencoding.bank.dto.SignInFormDto;
 import com.tencoding.bank.dto.SignUpFormDto;
 import com.tencoding.bank.handler.exception.CustomRestfulException;
@@ -17,8 +28,11 @@ import com.tencoding.bank.service.UserService;
 import com.tencoding.bank.utils.Define;
 
 @Controller
-@RequestMapping("/user")
+@RequestMapping({"/user", "/"})
 public class UserController {
+	
+	@Value("${tenco.key}")
+	private String tencoKey; 
 
 	@Autowired // DI 처리
 	private UserService userService;
@@ -39,7 +53,7 @@ public class UserController {
 
 	// 로그인 페이지 요청
 	// http://localhost:80/user/sign-in
-	@GetMapping("/sign-in")
+	@GetMapping({"/sign-in", ""})
 	public String signIn() {
 		return "user/signIn";
 	}
@@ -106,5 +120,92 @@ public class UserController {
 	public String logout() {
 		session.invalidate();
 		return "redirect:/user/sign-in";
+	}
+	
+	// http://localhost/user/kakao/callback?code="ZESasa"
+	@GetMapping("/kakao/callback")
+//	@ResponseBody // data 반환 명시
+	public String kakaoCallback(@RequestParam String code) {
+		System.out.println("메서드 동작");
+		
+		// POST 방식 - exchange() 메서드 활용
+		// Header 헤더 구성
+		// body 구성
+
+		RestTemplate rt = new RestTemplate();
+		// 헤더 구성
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+
+		// body	구성
+		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+		params.add("grant_type", "authorization_code");
+		params.add("client_id", "377740b5c8200afbe2f005592917c6c7");
+		params.add("redirect_uri", "http://localhost/user/kakao/callback");
+		params.add("code", code);
+		
+		// HttpEntity 결합 (헤더 + 바디)
+		HttpEntity<MultiValueMap<String, String>> reqMes = 
+				new HttpEntity<>(params, headers);
+		
+		// HTTP 요청
+		ResponseEntity<OAuthToken> response = rt.exchange("https://kauth.kakao.com/oauth/token", HttpMethod.POST, reqMes, OAuthToken.class);
+		
+		// 1. DTO 파싱
+		System.out.println("액세스 토큰 확인" + response.getBody().toString());
+		// 액세스 토큰
+		// 액세스 토큰 --> 카카오 서버 (정보)
+		
+		// 문서 확인 - 정보 요청 주소 형식
+		System.out.println("------------------------------------------------");
+		RestTemplate ret2 = new RestTemplate();
+		
+		// 헤더 생성
+		HttpHeaders headers2 = new HttpHeaders(); 
+		// Bearer <-- 다음에 반드시 한칸 공백
+		headers2.add("Authorization", "Bearer " + response.getBody().getAccessToken()); // response.getBody().getAccessToken() --> 액세스 토큰
+		headers2.add("Content-type", "Content-type: application/x-www-form-urlencoded;charset=utf-8");
+		// 바디 생성 - 생략
+		// 결합
+		HttpEntity<MultiValueMap<String, String>> kakaoInfo = new HttpEntity<>(headers2); // 바디 없이 헤더만 추가
+		
+		// HTTP 요청
+		ResponseEntity<KakaoProfile> response2 = ret2.exchange
+				("https://kapi.kakao.com/v2/user/me", HttpMethod.POST, kakaoInfo, KakaoProfile.class);
+		System.out.println("------------------------------------------------");
+		System.out.println(response2.getBody().getKakaoAccount().getEmail());
+		
+		System.out.println("-------카카오 서버에 정보 받기 완료-------");
+		
+		// 1. 회원 가입 여부 확인
+		// - 최초 사용자라면 우리 회원가입에 맞는 형식을 만들어서 회원가입 처리
+		// DB -> user_tb --> username, password, fullname
+		// password <-- 직접 만들어서 넣어야 합니다.
+		// 소셜 로그인 사용자는 모든 패스워드가 동일합니다.
+		// username -> 동일한 값이 저장되지 않도록 처리
+		
+		KakaoProfile kakaoProfile = response2.getBody();
+		
+		SignUpFormDto signUpFormDto = SignUpFormDto
+				.builder()
+				.username(kakaoProfile.getKakaoAccount().getEmail()+"_"+kakaoProfile.getId())
+				.fullname("OAuth_" + kakaoProfile.getKakaoAccount().getEmail())
+				.password("tencoKey")
+				.build();
+		
+		// User, null
+		User oldUser = userService.searchUsername(signUpFormDto.getUsername());
+		if (oldUser == null) {
+			// 사용자가 최초 소셜 로그인 사용자면 자동 회원 가입처리
+			userService.signUp(signUpFormDto);
+			oldUser.setUsername(signUpFormDto.getUsername());
+			oldUser.setFullname(signUpFormDto.getFullname());
+		}
+		oldUser.setPassword(null);
+		
+		// 그게 아니라면 바로 세션에 데이터 등록 로그인 처리
+		session.setAttribute(Define.PRINCIPAL, oldUser); // 로그인 처리
+		
+		return "redirect:/account/list";
 	}
 }
